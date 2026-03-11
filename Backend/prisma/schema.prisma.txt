@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String            @id @default(uuid())
+  email        String            @unique
+  passwordHash String
+  createdAt    DateTime          @default(now())
+  profile      TheriotypeProfile?
+  packId       String?
+  pack         Pack?             @relation(fields: [packId], references: [id])
+}
+
+model TheriotypeProfile {
+  id            String         @id @default(uuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speciesBase   String         // ej: "wolf", "cat"
+  harmonyScore  Float          @default(50.0)
+  rituals       RitualRecord[]
+}
+
+model RitualRecord {
+  id             String            @id @default(uuid())
+  profileId      String
+  profile        TheriotypeProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  date           DateTime          @default(now())
+  euphoriaScore  Int
+  dysphoriaScore Int
+  dominantShift  String            // "mental", "sensorial", "onirico"
+  
+  @@unique([profileId, date])      // Un ritual por día
+}
+
+model Pack {
+  id          String   @id @default(uuid())
+  name        String
+  locationLat Float?
+  locationLon Float?
+  members     User[]
+}
